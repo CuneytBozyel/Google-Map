@@ -1,0 +1,133 @@
+﻿@model IEnumerable<GoogleMaps.Models.Location>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Google Map</h2>
+
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+    }
+</style>
+
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=****&"> 
+</script>
+
+@*Keyinizi buradan alabilirsiniz //https://developers.google.com/maps/documentation/javascript/get-api-key*@
+
+<script type="text/javascript">
+    var map;
+    function initialize() {
+        var mapProp = {
+            center: new google.maps.LatLng(33, 08),
+            zoom: 2,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        map = new google.maps.Map(document.getElementById('map'), mapProp);
+    };
+
+    $(document).ready(function () {
+
+        initialize();
+        var gmarkers = [];
+        $(document).on('keyup', '#txtSearch', function () {
+
+            for (var i = 0; i < gmarkers.length; i++) {
+                gmarkers[i].setMap(null);
+            }
+            var country = $("#txtSearch").val();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("Search","Map")',
+                data: JSON.stringify({ "location": country }),
+                success: function (data) {
+                    var table = "<table class='table'>";
+                    $.each(data, function (index, value) {
+                        table += "<tr><td>" + value.LocationName + "</td> <td>" + value.latitude + "</td><td>" + value.Longitude + "</td></tr>";
+
+                        var marker = new google.maps.Marker({
+                            position: new google.maps.LatLng(value.latitude, value.Longitude),
+                            map: map,
+                            // title: field.crossroad
+                        });
+                        gmarkers.push(marker);
+                    });
+                    table += "</table>";
+                    $("#Mydata").html(table);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    console && console.log("request failed");
+                },
+                dataType: "JSON",
+                contentType: "application/json",
+                //processData: false,
+                //async: false
+            });
+
+
+        });
+    });
+</script>
+
+
+<div class="row">
+    <div class="col-lg-4">
+        <input id="txtSearch" type="text" />
+        <br />
+        <table class="table table-condensed">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.LocationName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.latitude)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Longitude)
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="Mydata">
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.LocationName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.latitude)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Longitude)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+    <div class="col-lg-8">
+        <div id="map"></div>
+        <script>
+            function initMap() {
+                var uluru = { lat: -25.363, lng: 131.044 };
+                var map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 4,
+                    center: uluru
+                });
+                var marker = new google.maps.Marker({
+                    position: uluru,
+                    map: map
+                });
+            }
+        </script>
+
+    </div>
+</div>
